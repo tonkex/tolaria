@@ -81,8 +81,8 @@ test('quick open: clicking outside closes palette', async ({ page }) => {
   await page.waitForTimeout(200)
   await expect(page.locator('.palette')).toBeVisible()
 
-  // Click the overlay (outside the palette)
-  await page.click('.palette__overlay', { position: { x: 10, y: 10 } })
-  await page.waitForTimeout(100)
+  // Click the overlay area (outside the palette) using mouse click at top-left
+  await page.mouse.click(10, 10)
+  await page.waitForTimeout(200)
   await expect(page.locator('.palette')).not.toBeVisible()
 })

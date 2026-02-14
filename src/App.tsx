@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { Sidebar } from './components/Sidebar'
 import { NoteList } from './components/NoteList'
@@ -7,6 +7,7 @@ import { Inspector } from './components/Inspector'
 import { ResizeHandle } from './components/ResizeHandle'
 import { CreateNoteDialog, type NoteType } from './components/CreateNoteDialog'
 import { QuickOpenPalette } from './components/QuickOpenPalette'
+import { Toast } from './components/Toast'
 import { isTauri, mockInvoke, addMockEntry } from './mock-tauri'
 import type { VaultEntry, SidebarSelection, GitCommit } from './types'
 import './App.css'
@@ -29,6 +30,12 @@ function App() {
   const [gitHistory, setGitHistory] = useState<GitCommit[]>([])
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showQuickOpen, setShowQuickOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  // Refs for keyboard shortcuts (to avoid stale closures)
+  const activeTabPathRef = useRef(activeTabPath)
+  activeTabPathRef.current = activeTabPath
+  const handleCloseTabRef = useRef<(path: string) => void>(() => {})
 
   useEffect(() => {
     const loadVault = async () => {
@@ -91,6 +98,16 @@ function App() {
       if (mod && e.key === 'p') {
         e.preventDefault()
         setShowQuickOpen(true)
+      } else if (mod && e.key === 'n') {
+        e.preventDefault()
+        setShowCreateDialog(true)
+      } else if (mod && e.key === 's') {
+        e.preventDefault()
+        setToastMessage('Saved')
+      } else if (mod && e.key === 'w') {
+        e.preventDefault()
+        const path = activeTabPathRef.current
+        if (path) handleCloseTabRef.current(path)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -152,6 +169,7 @@ function App() {
       return next
     })
   }, [activeTabPath])
+  handleCloseTabRef.current = handleCloseTab
 
   const handleSwitchTab = useCallback((path: string) => {
     setActiveTabPath(path)
@@ -273,6 +291,7 @@ function App() {
           onNavigate={handleNavigateWikilink}
         />
       </div>
+      <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
       <QuickOpenPalette
         open={showQuickOpen}
         entries={entries}
