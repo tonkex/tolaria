@@ -86,24 +86,41 @@ function BlockNoteTab({ content, onNavigateWikilink }: { content: string; onNavi
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [body])
 
-  // Intercept link clicks for wikilinks — use document-level capture to beat BlockNote/browser
+  // Patch wikilink anchors: remove href (prevents browser navigation) and attach click handler
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const link = (e.target as HTMLElement).closest?.('a')
-      if (!link) return
-      const href = link.getAttribute('href') || ''
-      if (href.startsWith('https://wikilink.internal/')) {
-        e.preventDefault()
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-        const wikiTarget = decodeURIComponent(href.replace('https://wikilink.internal/', ''))
-        navigateRef.current(wikiTarget)
-      }
+    const WIKILINK_PREFIX = 'https://wikilink.internal/'
+
+    function patchWikilinks(root: Element) {
+      root.querySelectorAll<HTMLAnchorElement>(`a[href^="${WIKILINK_PREFIX}"]`).forEach((a) => {
+        const target = decodeURIComponent(a.getAttribute('href')!.replace(WIKILINK_PREFIX, ''))
+        a.removeAttribute('href')
+        a.style.cursor = 'pointer'
+        a.style.color = 'var(--accent-blue)'
+        a.style.textDecoration = 'underline'
+        a.dataset.wikilink = target
+        a.onclick = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          navigateRef.current(target)
+        }
+      })
     }
-    // Capture phase on document to intercept before anything else
-    document.addEventListener('click', handler, true)
-    return () => document.removeEventListener('click', handler, true)
-  }, [])
+
+    // Patch on initial render and watch for DOM changes (BlockNote re-renders blocks)
+    const container = document.querySelector('.editor__blocknote-container')
+    if (!container) return
+
+    // Initial patch (delayed to let BlockNote render)
+    const timer = setTimeout(() => patchWikilinks(container), 200)
+
+    const observer = new MutationObserver(() => patchWikilinks(container))
+    observer.observe(container, { childList: true, subtree: true })
+
+    return () => {
+      clearTimeout(timer)
+      observer.disconnect()
+    }
+  }, [editor])
 
   const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') !== 'light'
 
