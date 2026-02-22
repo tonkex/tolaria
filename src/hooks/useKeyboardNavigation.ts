@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { isTauri } from '../mock-tauri'
-import { filterEntries, sortByModified, buildRelationshipGroups } from '../components/NoteList'
+import { filterEntries, sortByModified, buildRelationshipGroups } from '../utils/noteListHelpers'
 import type { VaultEntry, SidebarSelection } from '../types'
 
 interface Tab {
