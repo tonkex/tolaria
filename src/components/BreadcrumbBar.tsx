@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import {
   GitBranch,
   Code,
+  ShareNetwork,
   Sparkle,
   SlidersHorizontal,
   Trash,
@@ -31,6 +32,8 @@ interface BreadcrumbBarProps {
   onToggleDiff: () => void
   rawMode?: boolean
   onToggleRaw?: () => void
+  graphMode?: boolean
+  onToggleGraph?: () => void
   /** When true, raw mode is forced (non-markdown file) — hide the toggle. */
   forceRawMode?: boolean
   showAIChat?: boolean
@@ -177,6 +180,21 @@ function RawToggleButton({ rawMode, onToggleRaw }: { rawMode?: boolean; onToggle
       shortcut={formatShortcutDisplay({ display: '⌘\\' })}
     >
       <Code size={16} className={BREADCRUMB_ICON_CLASS} />
+    </ToggleIconAction>
+  )
+}
+
+function GraphToggleButton({ graphMode, onToggleGraph }: { graphMode?: boolean; onToggleGraph?: () => void }) {
+  return (
+    <ToggleIconAction
+      active={!!graphMode}
+      activeClassName="text-primary"
+      activeLabel="Return to the note"
+      inactiveLabel="Open the local graph"
+      onClick={onToggleGraph}
+      shortcut={formatShortcutDisplay({ display: '⌘⇧G' })}
+    >
+      <ShareNetwork size={16} className={BREADCRUMB_ICON_CLASS} />
     </ToggleIconAction>
   )
 }
@@ -497,6 +515,8 @@ function BreadcrumbActions({
   onToggleDiff,
   rawMode,
   onToggleRaw,
+  graphMode,
+  onToggleGraph,
   forceRawMode,
   showAIChat,
   onToggleAIChat,
@@ -519,6 +539,7 @@ function BreadcrumbActions({
         onToggleDiff={onToggleDiff}
       />
       {!forceRawMode && <RawToggleButton rawMode={rawMode} onToggleRaw={onToggleRaw} />}
+      {!forceRawMode && <GraphToggleButton graphMode={graphMode} onToggleGraph={onToggleGraph} />}
       <AIChatAction showAIChat={showAIChat} onToggleAIChat={onToggleAIChat} />
       <ArchiveAction archived={entry.archived} onArchive={onArchive} onUnarchive={onUnarchive} />
       <DeleteAction onDelete={onDelete} />

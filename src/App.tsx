@@ -12,6 +12,7 @@ import { SearchPanel } from './components/SearchPanel'
 import { Toast } from './components/Toast'
 import { CommitDialog } from './components/CommitDialog'
 import { PulseView } from './components/PulseView'
+import { GraphView } from './components/GraphView'
 import { StatusBar } from './components/StatusBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CloneVaultModal } from './components/CloneVaultModal'
@@ -1450,6 +1451,20 @@ function App() {
               <div className={`app__note-list${aiActivity.highlightElement === 'notelist' ? ' ai-highlight' : ''}`} style={{ width: layout.noteListWidth }}>
                 {effectiveSelection.kind === 'filter' && effectiveSelection.filter === 'pulse' ? (
                   <PulseView vaultPath={resolvedPath} onOpenNote={handlePulseOpenNote} sidebarCollapsed={!sidebarVisible} onExpandSidebar={() => handleSetViewMode('all')} />
+                ) : effectiveSelection.kind === 'filter' && effectiveSelection.filter === 'graph' ? (
+                  <GraphView
+                    entries={vault.entries}
+                    activeEntry={activeTab?.entry
+                      ? (vault.entries.find((candidate) => candidate.path === activeTab.entry.path) ?? activeTab.entry)
+                      : null}
+                    vaultPath={resolvedPath}
+                    onOpenNote={(path) => {
+                      const entry = vault.entries.find((candidate) => candidate.path === path)
+                      if (entry) notes.handleSelectNote(entry)
+                    }}
+                    sidebarCollapsed={!sidebarVisible}
+                    onExpandSidebar={() => handleSetViewMode('all')}
+                  />
                 ) : (
                   <NoteList entries={vault.entries} selection={effectiveSelection} selectedNote={activeTab?.entry ?? null} noteListFilter={noteListFilter} onNoteListFilterChange={setNoteListFilter} inboxPeriod={inboxPeriod} modifiedFiles={vault.modifiedFiles} modifiedFilesError={vault.modifiedFilesError} getNoteStatus={vault.getNoteStatus} sidebarCollapsed={!sidebarVisible} onSelectNote={notes.handleSelectNote} onReplaceActiveTab={handleReplaceActiveTabWithQueuedDiff} onEnterNeighborhood={handleEnterNeighborhood} onCreateNote={notes.handleCreateNoteImmediate} onBulkOrganize={explicitOrganizationEnabled ? bulkActions.handleBulkOrganize : undefined} onBulkArchive={bulkActions.handleBulkArchive} onBulkDeletePermanently={deleteActions.handleBulkDeletePermanently} onUpdateTypeSort={notes.handleUpdateFrontmatter} onUpdateViewDefinition={handleUpdateViewDefinition} updateEntry={vault.updateEntry} onOpenInNewWindow={handleOpenEntryInNewWindow} onDiscardFile={handleDiscardFile} onOpenDeletedNote={handleOpenDeletedNote} allNotesNoteListProperties={vaultConfig.allNotes?.noteListProperties ?? null} onUpdateAllNotesNoteListProperties={handleUpdateAllNotesNoteListProperties} inboxNoteListProperties={vaultConfig.inbox?.noteListProperties ?? null} onUpdateInboxNoteListProperties={handleUpdateInboxNoteListProperties} views={vault.views} visibleNotesRef={visibleNotesRef} multiSelectionCommandRef={multiSelectionCommandRef} />
                 )}

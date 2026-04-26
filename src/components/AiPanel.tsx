@@ -57,7 +57,7 @@ export function AiPanelView({
   const defaultAiAgent = providedDefaultAiAgent ?? DEFAULT_AI_AGENT
   const defaultAiAgentReady = providedDefaultAiAgentReady ?? true
   const useLegacyAiExperience = providedDefaultAiAgent === undefined && providedDefaultAiAgentReady === undefined
-  const inputRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLElement>(null)
   const agentLabel = getAiAgentDefinition(defaultAiAgent).label
   const {

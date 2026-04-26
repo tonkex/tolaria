@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Robot, X, PaperPlaneRight, Plus, Link } from '@phosphor-icons/react'
 import { AiMessage } from './AiMessage'
-import { WikilinkChatInput } from './WikilinkChatInput'
 import { extractInlineWikilinkReferences } from './inlineWikilinkText'
+import { Textarea } from './ui/textarea'
 import type { AiAgentMessage } from '../hooks/useCliAiAgent'
 import type { NoteReference } from '../utils/ai-context'
 import type { VaultEntry } from '../types'
@@ -37,7 +37,7 @@ interface AiPanelComposerProps {
   agentReady: boolean
   hasContext: boolean
   input: string
-  inputRef: React.RefObject<HTMLDivElement | null>
+  inputRef: React.RefObject<HTMLTextAreaElement | null>
   isActive: boolean
   legacyCopy: boolean
   onChange: (value: string) => void
@@ -218,9 +218,27 @@ export function AiPanelComposer({
   onSend,
   onUnsupportedAiPaste,
 }: AiPanelComposerProps) {
+  const [draft, setDraft] = useState(input)
+  const isComposingRef = useRef(false)
   const composerDisabled = isActive || !agentReady
-  const canSend = !composerDisabled && input.trim().length > 0
+  const canSend = !composerDisabled && draft.trim().length > 0
   const placeholder = getComposerPlaceholder(agentLabel, agentReady, legacyCopy, hasContext)
+  const syncParentInput = useCallback((nextValue: string) => {
+    onChange(nextValue)
+  }, [onChange])
+  const submitDraft = useCallback(() => {
+    if (!canSend) return
+    onSend(draft, extractInlineWikilinkReferences(draft, entries))
+  }, [canSend, draft, entries, onSend])
+
+  useEffect(() => {
+    if (isComposingRef.current) return
+    setDraft(input)
+    if (inputRef.current && inputRef.current.value !== input) {
+      inputRef.current.value = input
+    }
+  }, [input, inputRef])
+
   const sendButtonStyle = {
     background: canSend ? 'var(--primary)' : 'var(--muted)',
     color: canSend ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
@@ -237,21 +255,51 @@ export function AiPanelComposer({
     >
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <WikilinkChatInput
-            entries={entries}
-            value={input}
-            onChange={onChange}
-            onSend={onSend}
-            onUnsupportedPaste={onUnsupportedAiPaste}
+          <Textarea
+            ref={inputRef}
+            data-testid="agent-input"
+            defaultValue={input}
+            onChange={(event) => {
+              const nextValue = event.target.value
+              setDraft(nextValue)
+              if (!isComposingRef.current) {
+                syncParentInput(nextValue)
+              }
+            }}
             disabled={composerDisabled}
             placeholder={placeholder}
-            inputRef={inputRef}
+            aria-placeholder={placeholder}
+            rows={2}
+            className="min-h-[34px] resize-none px-[10px] py-[8px] text-[13px] md:text-[13px]"
+            onCompositionStart={() => {
+              isComposingRef.current = true
+            }}
+            onCompositionEnd={(event) => {
+              isComposingRef.current = false
+              const nextValue = event.currentTarget.value
+              setDraft(nextValue)
+              syncParentInput(nextValue)
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
+                return
+              }
+              event.preventDefault()
+              submitDraft()
+            }}
+            onPaste={(event) => {
+              const items = Array.from(event.clipboardData.items)
+              if (items.some((item) => item.kind === 'file' || item.type.startsWith('image/'))) {
+                event.preventDefault()
+                onUnsupportedAiPaste?.('Only text paste is supported in the AI composer right now.')
+              }
+            }}
           />
         </div>
         <button
           className="shrink-0 flex items-center justify-center border-none cursor-pointer transition-colors"
           style={sendButtonStyle}
-          onClick={() => onSend(input, extractInlineWikilinkReferences(input, entries))}
+          onClick={submitDraft}
           disabled={!canSend}
           title="Send message"
           data-testid="agent-send"

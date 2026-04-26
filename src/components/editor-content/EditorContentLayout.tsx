@@ -5,6 +5,7 @@ import { ArchivedNoteBanner } from '../ArchivedNoteBanner'
 import { ConflictNoteBanner } from '../ConflictNoteBanner'
 import { RawEditorView } from '../RawEditorView'
 import { SingleEditorView } from '../SingleEditorView'
+import { GraphView } from '../GraphView'
 import type { useEditorContentModel } from './useEditorContentModel'
 
 type EditorContentModel = ReturnType<typeof useEditorContentModel>
@@ -16,6 +17,8 @@ type BreadcrumbActions = Pick<
   | 'onToggleDiff'
   | 'effectiveRawMode'
   | 'onToggleRaw'
+  | 'graphMode'
+  | 'onToggleGraph'
   | 'forceRawMode'
   | 'showAIChat'
   | 'onToggleAIChat'
@@ -117,6 +120,8 @@ function ActiveTabBreadcrumb({
       onToggleDiff={actions.onToggleDiff}
       rawMode={actions.effectiveRawMode}
       onToggleRaw={actions.onToggleRaw}
+      graphMode={actions.graphMode}
+      onToggleGraph={actions.onToggleGraph}
       forceRawMode={actions.forceRawMode}
       showAIChat={actions.showAIChat}
       onToggleAIChat={actions.onToggleAIChat}
@@ -200,6 +205,38 @@ function EditorCanvas({
   )
 }
 
+function GraphModeView({
+  showGraph,
+  entries,
+  activeTab,
+  vaultPath,
+  onNavigateWikilink,
+}: Pick<EditorContentModel, 'showGraph' | 'entries' | 'activeTab' | 'vaultPath' | 'onNavigateWikilink'>) {
+  if (!showGraph || !activeTab) return null
+
+  const handleOpenGraphNode = (path: string) => {
+    const wikilinkTarget = path
+      .replace(/^\/+/, '')
+      .replace(/^wiki\//, '')
+      .replace(/\.md$/i, '')
+    onNavigateWikilink(wikilinkTarget)
+  }
+
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden">
+      <GraphView
+        entries={entries}
+        activeEntry={activeTab.entry}
+        vaultPath={vaultPath}
+        onOpenNote={handleOpenGraphNode}
+        embedded
+        fixedProvider="vault"
+        fixedScope="local"
+      />
+    </div>
+  )
+}
+
 export function EditorContentLayout(model: EditorContentModel) {
   const {
     activeTab,
@@ -228,6 +265,7 @@ export function EditorContentLayout(model: EditorContentModel) {
     isDeletedPreview,
     rawLatestContentRef,
     rawModeContent,
+    showGraph,
   } = model
 
   if (!activeTab) {
@@ -251,6 +289,8 @@ export function EditorContentLayout(model: EditorContentModel) {
           onToggleDiff: model.onToggleDiff,
           effectiveRawMode: model.effectiveRawMode,
           onToggleRaw: model.onToggleRaw,
+          graphMode: model.graphMode,
+          onToggleGraph: model.onToggleGraph,
           forceRawMode: model.forceRawMode,
           showAIChat: model.showAIChat,
           onToggleAIChat: model.onToggleAIChat,
@@ -285,6 +325,13 @@ export function EditorContentLayout(model: EditorContentModel) {
         onSave={onSave}
         rawLatestContentRef={rawLatestContentRef}
         vaultPath={vaultPath}
+      />
+      <GraphModeView
+        showGraph={showGraph}
+        entries={entries}
+        activeTab={activeTab}
+        vaultPath={vaultPath}
+        onNavigateWikilink={onNavigateWikilink}
       />
       <EditorCanvas
         showEditor={showEditor}

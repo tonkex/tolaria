@@ -11,6 +11,7 @@ interface EditorContentStateInput {
   activeTab: EditorContentTab | null
   entries: VaultEntry[]
   rawMode: boolean
+  graphMode: boolean
   activeStatus: NoteStatus
 }
 
@@ -65,32 +66,35 @@ function deriveVisibilityState(input: {
   activeTab: EditorContentTab | null
   freshEntry: VaultEntry | undefined
   rawMode: boolean
+  graphMode: boolean
 }): VisibilityState {
   const {
     activeTab,
     freshEntry,
     rawMode,
+    graphMode,
   } = input
   const isDeletedPreview = !!activeTab && !freshEntry
   const isNonMarkdownText = activeTab?.entry.fileKind === 'text'
-  const effectiveRawMode = rawMode || isNonMarkdownText
+  const effectiveRawMode = (rawMode || isNonMarkdownText) && !graphMode
 
   return {
     isDeletedPreview,
     isNonMarkdownText,
     effectiveRawMode,
-    showEditor: !effectiveRawMode,
+    showEditor: !effectiveRawMode && !graphMode,
   }
 }
 
 export function deriveEditorContentState(input: EditorContentStateInput): EditorContentState {
-  const { activeTab, entries, rawMode } = input
+  const { activeTab, entries, rawMode, graphMode } = input
   const freshEntry = findFreshEntry(activeTab, entries)
   const hasH1 = resolveHasH1(activeTab, freshEntry)
   const visibilityState = deriveVisibilityState({
     activeTab,
     freshEntry,
     rawMode,
+    graphMode,
   })
 
   return {

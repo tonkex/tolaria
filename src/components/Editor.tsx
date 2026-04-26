@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, memo } from 'react'
+import { useRef, useEffect, useCallback, memo, useState } from 'react'
 import { useEditorTabSwap } from '../hooks/useEditorTabSwap'
 import { useCreateBlockNote } from '@blocknote/react'
 import '@blocknote/mantine/style.css'
@@ -104,15 +104,27 @@ function useEditorModeExclusion({
   rawToggleRef?: React.MutableRefObject<() => void>
   diffToggleRef?: React.MutableRefObject<() => void>
 }) {
+  const [graphMode, setGraphMode] = useState(false)
+
   const handleToggleDiffExclusive = useCallback(async () => {
     if (!diffMode && rawMode) handleToggleRaw()
+    if (!diffMode) setGraphMode(false)
     await handleToggleDiff()
   }, [diffMode, rawMode, handleToggleDiff, handleToggleRaw])
 
   const handleToggleRawExclusive = useCallback(() => {
     if (!rawMode && diffMode) handleToggleDiff()
+    if (!rawMode) setGraphMode(false)
     handleToggleRaw()
   }, [rawMode, diffMode, handleToggleDiff, handleToggleRaw])
+
+  const handleToggleGraphExclusive = useCallback(() => {
+    if (!graphMode) {
+      if (rawMode) handleToggleRaw()
+      if (diffMode) handleToggleDiff()
+    }
+    setGraphMode((current) => !current)
+  }, [diffMode, graphMode, handleToggleDiff, handleToggleRaw, rawMode])
 
   useEffect(() => {
     if (rawToggleRef) rawToggleRef.current = handleToggleRawExclusive
@@ -122,7 +134,7 @@ function useEditorModeExclusion({
     if (diffToggleRef) diffToggleRef.current = handleToggleDiffExclusive
   }, [diffToggleRef, handleToggleDiffExclusive])
 
-  return { handleToggleDiffExclusive, handleToggleRawExclusive }
+  return { handleToggleDiffExclusive, handleToggleRawExclusive, handleToggleGraphExclusive, graphMode }
 }
 
 function EditorEmptyState() {
@@ -216,7 +228,7 @@ function useEditorSetup({
     onPendingCommitDiffHandled,
   })
 
-  const { handleToggleDiffExclusive, handleToggleRawExclusive } = useEditorModeExclusion({
+  const { handleToggleDiffExclusive, handleToggleRawExclusive, handleToggleGraphExclusive, graphMode } = useEditorModeExclusion({
     diffMode, rawMode, handleToggleDiff, handleToggleRaw, rawToggleRef, diffToggleRef,
   })
 
@@ -227,7 +239,7 @@ function useEditorSetup({
   return {
     editor, activeTab, rawLatestContentRef, rawModeContent,
     rawMode, diffMode, diffContent, diffLoading,
-    handleToggleDiffExclusive, handleToggleRawExclusive,
+    handleToggleDiffExclusive, handleToggleRawExclusive, handleToggleGraphExclusive, graphMode,
     handleEditorChange, handleViewCommitDiff,
     isLoadingNewTab, activeStatus, showDiffToggle,
   }
@@ -279,6 +291,8 @@ function EditorLayout({
   handleToggleDiffExclusive,
   rawMode,
   handleToggleRawExclusive,
+  graphMode,
+  handleToggleGraphExclusive,
   onContentChange,
   onSave,
   activeStatus,
@@ -333,6 +347,8 @@ function EditorLayout({
   handleToggleDiffExclusive: () => void | Promise<void>
   rawMode: boolean
   handleToggleRawExclusive: () => void
+  graphMode: boolean
+  handleToggleGraphExclusive: () => void
   onContentChange?: (path: string, content: string) => void
   onSave?: () => void
   activeStatus: NoteStatus
@@ -392,6 +408,8 @@ function EditorLayout({
               onToggleDiff={handleToggleDiffExclusive}
               rawMode={rawMode}
               onToggleRaw={handleToggleRawExclusive}
+              graphMode={graphMode}
+              onToggleGraph={handleToggleGraphExclusive}
               onRawContentChange={onContentChange}
               onSave={onSave}
               activeStatus={activeStatus}
@@ -474,7 +492,7 @@ export const Editor = memo(function Editor(props: EditorProps) {
   const {
     editor, activeTab, rawLatestContentRef, rawModeContent,
     rawMode, diffMode, diffContent, diffLoading,
-    handleToggleDiffExclusive, handleToggleRawExclusive,
+    handleToggleDiffExclusive, handleToggleRawExclusive, handleToggleGraphExclusive, graphMode,
     handleEditorChange, handleViewCommitDiff,
     isLoadingNewTab, activeStatus, showDiffToggle,
   } = useEditorSetup({
@@ -507,6 +525,8 @@ export const Editor = memo(function Editor(props: EditorProps) {
       handleToggleDiffExclusive={handleToggleDiffExclusive}
       rawMode={rawMode}
       handleToggleRawExclusive={handleToggleRawExclusive}
+      graphMode={graphMode}
+      handleToggleGraphExclusive={handleToggleGraphExclusive}
       onContentChange={onContentChange}
       onSave={onSave}
       activeStatus={activeStatus}

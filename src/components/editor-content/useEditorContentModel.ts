@@ -21,6 +21,8 @@ export interface EditorContentProps {
   onToggleDiff: () => void
   rawMode: boolean
   onToggleRaw: () => void
+  graphMode: boolean
+  onToggleGraph: () => void
   onRawContentChange?: (path: string, content: string) => void
   onSave?: () => void
   activeStatus: NoteStatus
@@ -51,6 +53,7 @@ export function useEditorContentModel(props: EditorContentProps) {
     entries,
     rawMode,
     diffMode,
+    graphMode,
   } = props
 
   const { cssVars } = useEditorTheme()
@@ -66,9 +69,11 @@ export function useEditorContentModel(props: EditorContentProps) {
     activeTab,
     entries,
     rawMode,
+    graphMode,
     activeStatus: props.activeStatus,
   })
-  const showEditor = !diffMode && showContentEditor
+  const showEditor = !diffMode && !graphMode && showContentEditor
+  const showGraph = !diffMode && graphMode
 
   const breadcrumbBarRef = useRef<HTMLDivElement | null>(null)
 
@@ -80,6 +85,7 @@ export function useEditorContentModel(props: EditorContentProps) {
     effectiveRawMode,
     forceRawMode: isNonMarkdownText || isDeletedPreview,
     showEditor,
+    showGraph,
     path,
     breadcrumbBarRef,
     wordCount,

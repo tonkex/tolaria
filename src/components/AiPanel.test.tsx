@@ -127,7 +127,7 @@ describe('AiPanel', () => {
     render(<AiPanel onClose={vi.fn()} vaultPath="/tmp/vault" />)
     const input = screen.getByTestId('agent-input')
     expect(input).toBeTruthy()
-    expect(input).toHaveAttribute('contenteditable', 'true')
+    expect(input.tagName).toBe('TEXTAREA')
   })
 
   it('has send button disabled when input is empty', () => {

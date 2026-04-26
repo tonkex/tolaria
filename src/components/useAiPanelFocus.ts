@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 
 interface UseAiPanelFocusArgs {
-  inputRef: React.RefObject<HTMLDivElement | null>
+  inputRef: React.RefObject<HTMLElement | null>
   panelRef: React.RefObject<HTMLElement | null>
   hasMessages: boolean
   isActive: boolean
@@ -10,7 +10,7 @@ interface UseAiPanelFocusArgs {
 
 function focusPreferredElement(
   panelRef: React.RefObject<HTMLElement | null>,
-  inputRef: React.RefObject<HTMLDivElement | null>,
+  inputRef: React.RefObject<HTMLElement | null>,
   shouldFocusPanel: boolean,
 ) {
   if (shouldFocusPanel) {

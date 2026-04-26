@@ -1,4 +1,4 @@
-import { Archive, FileText, Tray } from '@phosphor-icons/react'
+import { Archive, FileText, ShareNetwork, Tray } from '@phosphor-icons/react'
 import type { SidebarSelection } from '../../types'
 import { isSelectionActive, NavItem } from '../SidebarParts'
 
@@ -42,6 +42,12 @@ export function SidebarTopNav({
         badgeStyle={{ background: 'var(--muted)' }}
         activeBadgeClassName="bg-primary text-primary-foreground"
         onClick={() => onSelect({ kind: 'filter', filter: 'all' })}
+      />
+      <NavItem
+        icon={ShareNetwork}
+        label="Graph"
+        isActive={isSelectionActive(selection, { kind: 'filter', filter: 'graph' })}
+        onClick={() => onSelect({ kind: 'filter', filter: 'graph' })}
       />
       <NavItem
         icon={Archive}
